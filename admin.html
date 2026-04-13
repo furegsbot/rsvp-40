@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSVP Admin – 40. Geburtstag</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 20px; background: #f9f9f9; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        h1 { margin: 0; }
+        .subtitle { opacity: 0.8; font-size: 0.9em; }
+        .stats { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 200px; }
+        .stat-card h3 { margin-top: 0; color: #2c3e50; }
+        .stat-number { font-size: 2em; font-weight: bold; }
+        .confirmed { color: #27ae60; }
+        .declined { color: #e74c3c; }
+        .pending { color: #f39c12; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #34495e; color: white; }
+        tr:hover { background: #f5f5f5; }
+        .attending-yes { color: #27ae60; font-weight: bold; }
+        .attending-no { color: #e74c3c; }
+        .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #7f8c8d; }
+        .last-update { margin-top: 20px; font-size: 0.9em; color: #7f8c8d; }
+        .actions { margin-bottom: 20px; }
+        .btn { display: inline-block; background: #3498db; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; margin-right: 10px; }
+        .btn:hover { background: #2980b9; }
+        .btn-refresh { background: #2ecc71; }
+        .btn-download { background: #9b59b6; }
+        @media (max-width: 768px) {
+            table, .stats { font-size: 0.9em; }
+            th, td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎉 RSVP Admin – 40. Geburtstag</h1>
+            <div class="subtitle">Automatisch aktualisierte Übersicht aller Rückmeldungen</div>
+        </header>
+
+        <div class="actions">
+            <a href="https://ck40.de/" class="btn" target="_blank">📋 Zum RSVP-Formular</a>
+            <a href="https://github.com/furegsbot/40geburtstag-planung/blob/main/data.csv" class="btn btn-download" target="_blank">📥 CSV herunterladen</a>
+            <button onclick="loadData()" class="btn btn-refresh">🔄 Aktualisieren</button>
+        </div>
+
+        <div class="stats" id="stats">
+            <!-- Filled by JavaScript -->
+        </div>
+
+        <div class="loading" id="loading">Lade RSVP-Daten...</div>
+
+        <table id="rsvp-table" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Erwachsene</th>
+                    <th>Kinder</th>
+                    <th>Teilnahme</th>
+                    <th>Kommentar</th>
+                    <th>Zeitstempel</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+            </tbody>
+        </table>
+
+        <div class="last-update" id="last-update"></div>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://raw.githubusercontent.com/furegsbot/40geburtstag-planung/main/data.csv';
+        
+        function parseCSV(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
+                const row = {};
+                headers.forEach((header, idx) => {
+                    row[header] = values[idx] || '';
+                });
+                rows.push(row);
+            }
+            return rows;
+        }
+
+        function updateStats(rows) {
+            const confirmed = rows.filter(r => r['Teilnahme (Ja=1)'] === '1').length;
+            const declined = rows.filter(r => r['Teilnahme (Ja=1)'] === '0').length;
+            const totalAdults = rows.filter(r => r['Teilnahme (Ja=1)'] === '1')
+                .reduce((sum, r) => sum + parseInt(r.Erwachsene || 0), 0);
+            const totalChildren = rows.filter(r => r['Teilnahme (Ja=1)'] === '1')
+                .reduce((sum, r) => sum + parseInt(r.Kinder || 0), 0);
+            
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <h3>📨 Rückmeldungen</h3>
+                    <div class="stat-number">${rows.length}</div>
+                    <div>Gesamt eingegangen</div>
+                </div>
+                <div class="stat-card">
+                    <h3>✅ Zusagen</h3>
+                    <div class="stat-number confirmed">${confirmed}</div>
+                    <div>${totalAdults} Erwachsene, ${totalChildren} Kinder</div>
+                </div>
+                <div class="stat-card">
+                    <h3>❌ Absagen</h3>
+                    <div class="stat-number declined">${declined}</div>
+                    <div>Personen</div>
+                </div>
+                <div class="stat-card">
+                    <h3>⏳ Ausstehend</h3>
+                    <div class="stat-number pending">${rows.length - confirmed - declined}</div>
+                    <div>Noch keine Antwort</div>
+                </div>
+            `;
+        }
+
+        function updateTable(rows) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                const attending = row['Teilnahme (Ja=1)'];
+                tr.innerHTML = `
+                    <td>${row.Name || ''}</td>
+                    <td>${row.Erwachsene || '0'}</td>
+                    <td>${row.Kinder || '0'}</td>
+                    <td class="${attending === '1' ? 'attending-yes' : 'attending-no'}">
+                        ${attending === '1' ? '✅ Ja' : '❌ Nein'}
+                    </td>
+                    <td>${row.Kommentar || ''}</td>
+                    <td>${row.Zeitstempel || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('rsvp-table').style.display = 'table';
+        }
+
+        async function loadData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('rsvp-table').style.display = 'none';
+            
+            try {
+                const response = await fetch(CSV_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error('CSV konnte nicht geladen werden');
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+                
+                updateStats(rows);
+                updateTable(rows);
+                document.getElementById('last-update').textContent = `Letzte Aktualisierung: ${new Date().toLocaleString('de-DE')}`;
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `❌ Fehler beim Laden: ${error.message}`;
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Initial load
+        loadData();
+        // Auto-refresh every 5 minutes
+        setInterval(loadData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
