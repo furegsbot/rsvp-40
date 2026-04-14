@@ -1,0 +1,62 @@
+Total Walls   Total Lines   Total Items   Total Rooms   Total Doors   Total Windows
+
+
+27            0             6             0             0             0
+
+Wall Name     Wall Length
+
+
+Wall1         4,00 m
+
+Wall2         3,50 m
+
+Wall3         11,40 m
+
+Wall4         8,30 m
+
+Wall5         7,40 m
+
+Wall6         4,80 m
+
+Wall7         0,80 m
+
+Wall8         3,50 m
+
+Wall9         0,80 m
+
+Wall10        32,00 m
+
+Wall11        13,00 m
+
+Wall12        32,00 m
+
+Wall13        13,00 m
+
+Wall14        2,30 m
+
+Wall15        6,80 m
+
+Wall16        1,49 m
+
+Wall17        1,00 m
+
+Wall18        2,50 m
+
+Wall19        1,00 m
+
+Wall20        0,90 m
+
+Wall21        5,30 m
+
+Wall22        6,80 m
+
+Wall23        1,00 m
+
+Wall24        3,50 m
+
+Wall25        1,00 m
+
+Wall26        10,10 m
+
+Wall27        8,30 m
+
