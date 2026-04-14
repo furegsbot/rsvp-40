@@ -1,0 +1,43 @@
+name: RSVP Update & Guestlist Sync
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # hourly at minute 0
+  workflow_dispatch:      # manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install imap mailparser cheerio
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Run RSVP email parser
+        env:
+          IMAP_USER: ${{ secrets.IMAP_USER }}
+          IMAP_PASS: ${{ secrets.IMAP_PASS }}
+        run: node scripts/parse-rsvp-emails.js
+
+      - name: Update guestlist
+        run: node scripts/update-guestlist.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: RSVP import & guestlist sync" && git push)

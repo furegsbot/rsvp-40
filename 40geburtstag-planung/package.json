@@ -1,0 +1,19 @@
+{
+  "name": "40geburtstag-planung",
+  "version": "1.0.0",
+  "description": "Automatisierte Planung für 40. Geburtstag",
+  "main": "index.js",
+  "scripts": {
+    "parse": "node scripts/parse-rsvp-emails.js",
+    "update": "node scripts/update-guestlist.js",
+    "all": "npm run parse && npm run update"
+  },
+  "dependencies": {
+    "imap": "^0.8.19",
+    "mailparser": "^3.6.4",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
